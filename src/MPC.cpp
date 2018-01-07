@@ -60,7 +60,7 @@ class FG_eval {
 
     // Minimize the use of actuators.
     
-    double a_coeff=1+coeffs[2]*coeffs[2]*(ref_v-30)*(ref_v-30)*200;
+    double a_coeff=1+coeffs[2]*coeffs[2]*(ref_v-30)*(ref_v-30)*300;
     
     std::cout << a_coeff << std::endl;
 
