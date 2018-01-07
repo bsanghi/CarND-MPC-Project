@@ -69,8 +69,20 @@ Use the update equations and model errors in order to factor latency in the stat
   double psi_delay = 0 - ( v * delta * delay / Lf );
   double v_delay = v + a * delay;
   double cte_delay = cte + ( v * sin(epsi) * delay );
-  double epsi_delay = epsi + ( v * epsi * delay / Lf );
+  double epsi_delay = epsi + ( v * delta * delay / Lf );
 ```
+
+## Timestep Length and Elapsed Duration
+
+The time T=N dt defines the prediction horizon. Short prediction horizons lead to more responsive controlers and less accurate.
+It can suffer from instabilities when chosen too short. 
+Long prediction horizons generally lead to smoother controls. For a given prediction horizon 
+shorter time steps dt imply more accurate controls but also require more computational time.
+
+First, i reduced the default value (0.1) to 0.07 to cover higher speed range. 
+In the final version, i am using the default values:
+
+dt=0.1s and N=10
 
 ## Discussions & Some rubric points
 
@@ -102,7 +114,6 @@ and the following cost function used in the class.
 ### Study 1    
 
 The above cost function worked well for the following reference speed,30 and 50 and looked ok for 70mph. 
-Then, i reduced dt=0.1s to 0.07. Then, it worked well for 70mph. 
 
 Even i wanted to increase the reference speed, the car could not turn many turns and never reach the reference 
 speed because our track is relatively short and has too many turns.   
@@ -147,7 +158,7 @@ double a_coeff=1+coeffs[2]*coeffs[2]*(ref_v-30)*(ref_v-30)*300;
 so, I used the following numbers for final results.
 
 ```
-	N=10  and dt=0.07
+	N=10  and dt=0.1
 ```
 
 The final cost function :
@@ -177,13 +188,11 @@ The final cost function :
 
 The cost function worked well. The function is the function we used in the class except a_coeff for term a^2.
 
-The final videos:
+The final video:
 
 [ video for ref_v=50mph ](videos/final_50.mp4)  <br/>
-[ video for ref_v=100mph ](videos/final_100.mp4)
 
-The speed of car in the first video does not decrease much on turns and  is close to the reference
-speed. The speed of car in the second video decreased significantly and reached around 70mph on the turns and 
-increased over 90mph in the straight line. So, the algorithm worked well in the wide range of speed limits.   
+The speed of car in the video does not decrease much on turns and  is close to the reference
+speed.
 
 

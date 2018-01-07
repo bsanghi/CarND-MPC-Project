@@ -85,7 +85,7 @@ vector<double> delayed_state(double cte0, double epsi0, double v, double delta, 
   double psi_delay = psi0 - ( v * delta * delay / Lf );
   double v_delay = v + a * delay;
   double cte_delay = cte0 + ( v * sin(epsi0) * delay );
-  double epsi_delay = epsi0 + ( v * epsi0 * delay / Lf );
+  double epsi_delay = epsi0 + ( v * delta * delay / Lf );
 
   return {x_delay, y_delay, psi_delay, v_delay, cte_delay, epsi_delay};
 }
@@ -140,7 +140,7 @@ int main() {
           auto coeffs = polyfit(ptsx_transformed, ptsy_transformed, 3);
 
           // Actuator delay in milliseconds.
-          int actuatorDelay =  70;
+          int actuatorDelay =  100;
           double cte0 = coeffs[0];
           double epsi0 = -atan(coeffs[1]);
 
