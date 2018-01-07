@@ -77,6 +77,7 @@ Use the update equations and model errors in order to factor latency in the stat
 First, I used 10 timesteps (`N`) of 0.1 duration (`dt`) with a ref speed of 30,50, and 70 mph.
 and the following cost function used in the class.
 
+```
     // The part of the cost based on the reference state.
     for( int i = 0; i < N; i++ ) {
       fg[0] += CppAD::pow(vars[cte_start + i] - ref_cte, 2); 
@@ -96,6 +97,8 @@ and the following cost function used in the class.
       fg[0] += CppAD::pow(vars[a_start + i + 1] - vars[a_start + i], 2);
     }
 
+```
+
 ### Study 1    
 
 The above cost function worked well for the following reference speed,30 and 50 and looked ok for 70mph. 
@@ -108,10 +111,12 @@ Using the following parameter for a^2 , we can increase the reference speed to 9
 But, the real speed never pass 80mph because we use constant coefficient for a^2. 
 The videos look ok except one turn.
 
+```
 for (int i = 0; i< N - 1; i++) {
    fg[0] += CppAD::pow(vars[delta_start + i], 2);
    fg[0] += (ref_v-70)*CppAD::pow(vars[a_start + i], 2);
 }
+```
 
 ### Study 2
 
@@ -121,12 +126,11 @@ use dynamic coefficients instead of constant coefficients. So, I used coeffs[2] 
 the second order term for the polynomial fit.
 
 '''
-	double a_coeff=1+coeffs[2]*coeffs[2]*1000000;
-
-	for (int i = 0; i< N - 1; i++) {
-      		fg[0] += CppAD::pow(vars[delta_start + i], 2);
-      		fg[0] += a_coeff*CppAD::pow(vars[a_start + i], 2); 
-	}
+double a_coeff=1+coeffs[2]*coeffs[2]*1000000;
+for (int i = 0; i< N - 1; i++) {
+   fg[0] += CppAD::pow(vars[delta_start + i], 2);
+   fg[0] += a_coeff*CppAD::pow(vars[a_start + i], 2); 
+}
 '''
 
 when we are driving in the straight line, a_coeff gets 1. 
@@ -134,17 +138,21 @@ when we are starting turn, we will see the larger numbers
 for a_coeff. I combined the above two studies which are done separately
 and found the following a_coeff which contains coeff[2] and ref_v(reference speed).
 
+```
 double a_coeff=1+coeffs[2]*coeffs[2]*(ref_v-30)*(ref_v-30)*300;
+```
 
 ## Results
 
 so, I used the following numbers for final results.
 
-N=10
-dt=0.10
+```
+	N=10  and dt=0.07
+```
 
 The final cost function :
 
+```
     // The part of the cost based on the reference state.
     for( int i = 0; i < N; i++ ) {
       fg[0] += CppAD::pow(vars[cte_start + i] - ref_cte, 2); 
@@ -164,6 +172,8 @@ The final cost function :
       fg[0] += 600*CppAD::pow(vars[delta_start + i + 1] - vars[delta_start + i], 2);
       fg[0] += CppAD::pow(vars[a_start + i + 1] - vars[a_start + i], 2); 
     }
+```
+
 
 The cost function worked well. The function is the function we used in the class except a_coeff for term a^2.
 
