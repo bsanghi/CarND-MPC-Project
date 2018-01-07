@@ -36,40 +36,45 @@ The model is expressed by the following equations:
       epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
 ```
 
-## MPC Preprocessing
+## Polynomial Fitting
 
-### Polynomial Fitting
 The waypoints are transformed to vehicle coordinate system by translation and rotation. 
 X axis aligns with the heading direction. This transformation allows to perform 
 calculations consistently in vehicle coordinate system.
 ```
-   car_x = (ptsx[i] - px) * cos(psi) + (ptsy[i] - py) * sin(psi);
-   car_y = (ptsy[i] - py) * cos(psi) - (ptsx[i] - px) * sin(psi);
-```
+   	  // Convert from map coordinates to vehicle coordinates
+          for (int i = 0; i < ptsx.size(); i++){
+              auto car_coord = transfor_car_coord(psi, px, py, ptsx[i], ptsy[i]);
+              ptsx_transformed[i] = car_coord[0];
+              ptsy_transformed[i] = car_coord[1];
+          }
 
+          // Fit polynomial to the points - 3rd order.
+          auto coeffs = polyfit(ptsx_transformed, ptsy_transformed, 3);
+
+```
 A third degree polynomial was used to compute the trajectory of the car. As mentioned in the 
 lectures, most of the real world roads can be fitted with a third degree polynomial.
+The functions for transformation to car coordinate and polyfit can be found in main.cpp.
 
-### Model Predictive Control with Latency
+## Model Predictive Control with Latency
+
 A latency of 70ms is artificially added before sending actuations to the simulator to simulate
 real world conditions.  
-
 Use the update equations and model errors in order to factor latency in the state vector.
 
 ```
-    Lf=2.67;
-    x_dl = (0.0 + v * latency);
-    y_dl = 0.0;
-    psi_dl = 0.0 + v * steer_value_input / Lf * latency;
-    v_dl = 0.0 + v + throttle_value_input * latency;
-    cte_dl = cte + (v * sin(epsi) * latency);
-    epsi_dl = epsi + v * steer_value_input / Lf * latency;
+  double x_delay = 0 + ( v * cos(psi0) * delay );
+  double y_delay = 0+ ( v * sin(psi0) * delay );
+  double psi_delay = 0 - ( v * delta * delay / Lf );
+  double v_delay = v + a * delay;
+  double cte_delay = cte + ( v * sin(epsi) * delay );
+  double epsi_delay = epsi + ( v * epsi * delay / Lf );
 ```
-
 
 ## Discussions & Some rubric points
 
-I used 10 timesteps (`N`) of 0.1 duration (`dt`) with a ref speed of 30,50, and 70 mph.
+First, I used 10 timesteps (`N`) of 0.1 duration (`dt`) with a ref speed of 30,50, and 70 mph.
 and the following cost function used in the class.
 
     // The part of the cost based on the reference state.
@@ -95,7 +100,6 @@ and the following cost function used in the class.
 
 The above cost function worked well for the following reference speed,30 and 50 and looked ok for 70mph. 
 Then, i reduced dt=0.1s to 0.07. Then, it worked well for 70mph. 
-
 
 Even i wanted to increase the reference speed, the car could not turn many turns and never reach the reference 
 speed because our track is relatively short and has too many turns.   
@@ -128,7 +132,7 @@ when we are starting turn, we will see the larger numbers
 for a_coeff. I combined the above two studies which are done separately
 and found the following a_coeff which contains coeff[2] and ref_v(reference speed).
 
-double a_coeff=1+coeffs[2]*coeffs[2]*(ref_v-30)*(ref_v-30)*200;
+double a_coeff=1+coeffs[2]*coeffs[2]*(ref_v-30)*(ref_v-30)*300;
 
 ## Results
 
@@ -137,7 +141,7 @@ so, I used the following numbers for final results.
 N=10
 dt=0.10
 
-The cost function :
+The final cost function :
 
     // The part of the cost based on the reference state.
     for( int i = 0; i < N; i++ ) {
@@ -148,7 +152,7 @@ The cost function :
 
     // Minimize the use of actuators.
     
-    double a_coeff=1+coeffs[2]*coeffs[2]*(ref_v-30)*(ref_v-30)*200;
+    double a_coeff=1+coeffs[2]*coeffs[2]*(ref_v-30)*(ref_v-30)*300;
 
     for (int i = 0; i< N - 1; i++) {
       fg[0] += CppAD::pow(vars[delta_start + i], 2);
