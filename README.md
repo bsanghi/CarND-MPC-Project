@@ -120,12 +120,14 @@ turn and increase the speed when the car drive in the straigth line. To do that,
 use dynamic coefficients instead of constant coefficients. So, I used coeffs[2] which represents
 the second order term for the polynomial fit.
 
-double a_coeff=1+coeffs[2]*coeffs[2]*1000000;
+'''
+	double a_coeff=1+coeffs[2]*coeffs[2]*1000000;
 
-for (int i = 0; i< N - 1; i++) {
-      fg[0] += CppAD::pow(vars[delta_start + i], 2);
-      fg[0] += a_coeff*CppAD::pow(vars[a_start + i], 2); 
-}
+	for (int i = 0; i< N - 1; i++) {
+      		fg[0] += CppAD::pow(vars[delta_start + i], 2);
+      		fg[0] += a_coeff*CppAD::pow(vars[a_start + i], 2); 
+	}
+'''
 
 when we are driving in the straight line, a_coeff gets 1. 
 when we are starting turn, we will see the larger numbers
