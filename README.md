@@ -163,11 +163,11 @@ The cost function worked well. The function is the function we used in the class
 
 The final videos:
 
-[ video for ref_v=50mph ](videos/final_50.mp4)
+[ video for ref_v=50mph ](videos/final_50.mp4)  <br/>
 [ video for ref_v=100mph ](videos/final_100.mp4)
 
 The speed of car in the first video does not decrease much on turns and  is close to the reference
-speed. The speed of car in the second video decreased significantly and reached around 70mph and increased over 90mph
-in the straight line. So, the algorithm worked well in the wide range of speed limits.   
+speed. The speed of car in the second video decreased significantly and reached around 70mph on the turns and 
+increased over 90mph in the straight line. So, the algorithm worked well in the wide range of speed limits.   
 
 
