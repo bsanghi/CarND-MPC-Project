@@ -1,6 +1,11 @@
 # CarND-MPC-Project
 Self-Driving Car Engineer Nanodegree Program
 
+
+## Project Description
+The purpose of this project is to develop a nonlinear model predictive controller (NMPC) to steer a car around a track in a simulator. 
+The simulator provides a feed of values containing the position of the car, its speed and heading direction. 
+
 ## The Model
 The Model Predictive Controller (MPC) calculates the trajectory, actuations and sends back
  steering to the simulator. <br/>
@@ -31,7 +36,9 @@ The model is expressed by the following equations:
       epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
 ```
 
-## Polynomial Fitting and MPC Preprocessing
+## MPC Preprocessing
+
+### Polynomial Fitting
 The waypoints are transformed to vehicle coordinate system by translation and rotation. 
 X axis aligns with the heading direction. This transformation allows to perform 
 calculations consistently in vehicle coordinate system.
@@ -43,11 +50,27 @@ calculations consistently in vehicle coordinate system.
 A third degree polynomial was used to compute the trajectory of the car. As mentioned in the 
 lectures, most of the real world roads can be fitted with a third degree polynomial.
 
-## Timestep Length and Elapsed Duration (N & dt)
+### Model Predictive Control with Latency
+A latency of 70ms is artificially added before sending actuations to the simulator to simulate
+real world conditions.  
 
-Timestep Length and Frequency were chosen by trial and error.
-I tried with 10 timesteps (`N`) of 0.1 duration (`dt`) with a ref speed of 30,50, and 70 mph.
-and the following cost function taught in the class.
+Use the update equations and model errors in order to factor latency in the state vector.
+
+```
+    Lf=2.67;
+    x_dl = (0.0 + v * latency);
+    y_dl = 0.0;
+    psi_dl = 0.0 + v * steer_value_input / Lf * latency;
+    v_dl = 0.0 + v + throttle_value_input * latency;
+    cte_dl = cte + (v * sin(epsi) * latency);
+    epsi_dl = epsi + v * steer_value_input / Lf * latency;
+```
+
+
+## Discussions & Some rubric points
+
+I used 10 timesteps (`N`) of 0.1 duration (`dt`) with a ref speed of 30,50, and 70 mph.
+and the following cost function used in the class.
 
     // The part of the cost based on the reference state.
     for( int i = 0; i < N; i++ ) {
@@ -68,11 +91,14 @@ and the following cost function taught in the class.
       fg[0] += CppAD::pow(vars[a_start + i + 1] - vars[a_start + i], 2);
     }
 
-    
-The above cost function worked well for 30 and 50 and looked ok for 70mph. Then, i reduced dt=0.1s to 0.07. 
-Then, it worked well for 70mph. Even i wanted to increase the reference speed, the car could not
-turn many turns and never reach the reference speed because our track is relatively short and has
-too many turns.   
+### Study 1    
+
+The above cost function worked well for the following reference speed,30 and 50 and looked ok for 70mph. 
+Then, i reduced dt=0.1s to 0.07. Then, it worked well for 70mph. 
+
+
+Even i wanted to increase the reference speed, the car could not turn many turns and never reach the reference 
+speed because our track is relatively short and has too many turns.   
 
 Using the following parameter for a^2 , we can increase the reference speed to 90mph and 100mph.
 But, the real speed never pass 80mph because we use constant coefficient for a^2. 
@@ -82,6 +108,8 @@ for (int i = 0; i< N - 1; i++) {
    fg[0] += CppAD::pow(vars[delta_start + i], 2);
    fg[0] += (ref_v-70)*CppAD::pow(vars[a_start + i], 2);
 }
+
+### Study 2
 
 To reach the reference speed, we have to reduce speeds when the car starts to
 turn and increase the speed when the car drive in the straigth line. To do that, we have to
@@ -101,6 +129,8 @@ for a_coeff. I combined the above two studies which are done separately
 and found the following a_coeff which contains coeff[2] and ref_v(reference speed).
 
 double a_coeff=1+coeffs[2]*coeffs[2]*(ref_v-30)*(ref_v-30)*200;
+
+## Results
 
 so, I used the following numbers for final results.
 
@@ -140,20 +170,4 @@ The speed of car in the first video does not decrease much on turns and  is clos
 speed. The speed of car in the second video decreased significantly and reached around 70mph and increased over 90mph
 in the straight line. So, the algorithm worked well in the wide range of speed limits.   
 
-## Model Predictive Control with Latency
-A latency of 70ms is artificially added before sending actuations to the simulator to simulate
-real world conditions.  Failure to handle the latency problem might lead to unrealistic trajectories and erratic driving
-behavior.
- 
-Use the update equations and model errors in order to factor latency in the state vector. 
-
-```
-    Lf=2.67;
-    x_dl = (0.0 + v * latency);
-    y_dl = 0.0;
-    psi_dl = 0.0 + v * steer_value_input / Lf * latency;
-    v_dl = 0.0 + v + throttle_value_input * latency;
-    cte_dl = cte + (v * sin(epsi) * latency);
-    epsi_dl = epsi + v * steer_value_input / Lf * latency;
-```
 
